@@ -1,89 +1,122 @@
-<p align="center"><img src="https://github.com/stacksjs/rpx/blob/main/.github/art/cover.jpg?raw=true" alt="Social Card of this repo"></p>
+# Introduction
 
-# A Better Developer Experience
+pngx is a performant TypeScript PNG encoder and decoder built for modern JavaScript runtimes. It provides a pure TypeScript implementation for reading and writing PNG images with full support for various color types, bit depths, and compression levels.
 
-> A TypeScript Starter Kit that will help you bootstrap your next project without minimal opinion.
+## What is pngx?
 
-# ts-jpeg
+pngx is a comprehensive PNG library that allows you to:
 
-This is an opinionated TypeScript Starter kit to help kick-start development of your next Bun package.
+- **Encode Images**: Convert raw pixel data to PNG format
+- **Decode Images**: Parse PNG files and extract pixel data
+- **Handle Metadata**: Read and write PNG metadata chunks
+- **Control Compression**: Fine-tune compression for size vs. speed tradeoffs
 
-## Get Started
+## Key Features
 
-It's rather simple to get your package development started:
+- **Pure TypeScript**: No native dependencies, works everywhere
+- **Full PNG Support**: All color types, bit depths, and interlacing
+- **Streaming API**: Process large images efficiently
+- **Sync and Async**: Both synchronous and asynchronous APIs
+- **Configurable Compression**: Multiple compression levels and strategies
+- **Type Safe**: Full TypeScript types for excellent DX
 
-```bash
-# you may use this GitHub template or the following command:
-bunx degit stacksjs/ts-starter my-pkg
-cd my-pkg
+## Supported Color Types
 
- # if you don't have pnpm installed, run `npm i -g pnpm`
-bun i # install all deps
-bun run build # builds the library for production-ready use
+pngx supports all standard PNG color types:
 
-# after you have successfully committed, you may create a "release"
-bun run release # automates git commits, versioning, and changelog generations
+| Color Type | Description | Bits Per Pixel |
+|------------|-------------|----------------|
+| Grayscale | Single channel | 1, 2, 4, 8, 16 |
+| RGB | Red, Green, Blue | 8, 16 per channel |
+| Indexed | Palette-based | 1, 2, 4, 8 |
+| Grayscale + Alpha | Gray with transparency | 8, 16 per channel |
+| RGBA | RGB with transparency | 8, 16 per channel |
+
+## Quick Example
+
+### Encoding
+
+```typescript
+import { PNG } from 'pngx'
+
+// Create a new PNG
+const png = new PNG({
+  width: 100,
+  height: 100,
+  colorType: 6, // RGBA
+})
+
+// Set pixel data
+for (let y = 0; y < png.height; y++) {
+  for (let x = 0; x < png.width; x++) {
+    const idx = (png.width * y + x) << 2
+
+    // Red gradient
+    png.data[idx] = (x / png.width) * 255
+    png.data[idx + 1] = 0
+    png.data[idx + 2] = 0
+    png.data[idx + 3] = 255
+  }
+}
+
+// Write to buffer
+const buffer = PNG.sync.write(png)
 ```
 
-_Check out the package.json scripts for more commands._
+### Decoding
 
-### Developer Experience (DX)
+```typescript
+import { PNG } from 'pngx'
+import { readFileSync } from 'fs'
 
-This Starter Kit comes pre-configured with the following:
+// Read PNG file
+const buffer = readFileSync('image.png')
 
-- [Powerful Build Process](https://github.com/oven-sh/bun) - via Bun
-- [Fully Typed APIs](https://www.typescriptlang.org/) - via TypeScript
-- [Documentation-ready](https://vitepress.dev/) - via VitePress
-- [CLI & Binary](https://www.npmjs.com/package/bunx) - via Bun & CAC
-- [Be a Good Commitizen](https://www.npmjs.com/package/git-cz) - pre-configured Commitizen & git-cz setup to simplify semantic git commits, versioning, and changelog generations
-- [Built With Testing In Mind](https://bun.sh/docs/cli/test) - pre-configured unit-testing powered by [Bun](https://bun.sh/docs/cli/test)
-- [Renovate](https://renovatebot.com/) - optimized & automated PR dependency updates
-- [ESLint](https://eslint.org/) - for code linting _(and formatting)_
-- [GitHub Actions](https://github.com/features/actions) - runs your CI _(fixes code style issues, tags releases & creates its changelogs, runs the test suite, etc.)_
+// Parse PNG
+const png = PNG.sync.read(buffer)
 
-## Changelog
+console.log(`Size: ${png.width}x${png.height}`)
+console.log(`Color Type: ${png.colorType}`)
+console.log(`Bit Depth: ${png.depth}`)
 
-Please see our [releases](https://github.com/stacksjs/stacks/releases) page for more information on what has changed recently.
+// Access pixel data
+const firstPixel = {
+  r: png.data[0],
+  g: png.data[1],
+  b: png.data[2],
+  a: png.data[3],
+}
+```
 
-## Contributing
+## Why pngx?
 
-Please review the [Contributing Guide](https://github.com/stacksjs/contributing) for details.
+### Compared to Other Libraries
 
-## Community
+- **No Native Dependencies**: Unlike `sharp` or `canvas`, pngx works without compilation
+- **TypeScript First**: Written in TypeScript with full type definitions
+- **Lightweight**: Minimal bundle size for frontend and serverless use
+- **Bun Optimized**: Designed for optimal performance with Bun runtime
 
-For help, discussion about best practices, or any other conversation that would benefit from being searchable:
+### Use Cases
 
-[Discussions on GitHub](https://github.com/stacksjs/stacks/discussions)
+- **Image Processing**: Resize, crop, and manipulate PNG images
+- **Thumbnail Generation**: Create thumbnails for uploaded images
+- **Data Visualization**: Generate charts and graphs as PNG
+- **Testing**: Create test images programmatically
+- **Serverless**: Process images in edge functions
 
-For casual chit-chat with others using this package:
+## Architecture
 
-[Join the Stacks Discord Server](https://discord.gg/stacksjs)
+pngx follows the PNG specification (RFC 2083) and implements:
 
-## Postcardware
+- **Parser**: Reads PNG chunks and validates structure
+- **Packer**: Creates PNG chunks with proper CRC
+- **Filters**: Implements all PNG filter types (None, Sub, Up, Average, Paeth)
+- **Compression**: Uses zlib deflate/inflate for data compression
 
-Two things are true: Stacks OSS will always stay open-source, and we do love to receive postcards from wherever Stacks is used! 🌍 _We also publish them on our website. And thank you, Spatie_
+## Next Steps
 
-Our address: Stacks.js, 12665 Village Ln #2306, Playa Vista, CA 90094
-
-## Sponsors
-
-We would like to extend our thanks to the following sponsors for funding Stacks development. If you are interested in becoming a sponsor, please reach out to us.
-
-- [JetBrains](https://www.jetbrains.com/)
-- [The Solana Foundation](https://solana.com/)
-
-## Credits
-
-- [Chris Breuer](https://github.com/chrisbbreuer)
-- [All Contributors](https://github.com/stacksjs/rpx/graphs/contributors)
-
-## License
-
-The MIT License (MIT). Please see [LICENSE](https://github.com/stacksjs/ts-starter/tree/main/LICENSE.md) for more information.
-
-Made with 💙
-
-<!-- Badges -->
-
-<!-- [codecov-src]: https://img.shields.io/codecov/c/gh/stacksjs/rpx/main?style=flat-square
-[codecov-href]: https://codecov.io/gh/stacksjs/rpx -->
+- [Installation](/install) - Get pngx installed
+- [Usage](/usage) - Learn the basic API
+- [Configuration](/config) - Customize encoding options
+- [PNG Encoding](/features/png-encoding) - Deep dive into encoding

@@ -1,118 +1,193 @@
-# Install
+# Installation
 
-_This is just an example of the ts-starter docs._
-
-Installing `rpx` is easy. Simply pull it in via your package manager of choice, or download the binary directly.
+Installing pngx is straightforward. Choose your preferred package manager to get started.
 
 ## Package Managers
 
-Choose your package manager of choice:
-
 ::: code-group
 
-```sh [npm]
-npm install --save-dev @stacksjs/rpx
-# npm i -d @stacksjs/rpx
+```sh [bun]
+# Install as dependency
+bun add pngx
 
-# or, install globally via
-npm i -g @stacksjs/rpx
+# Or as dev dependency
+bun add -d pngx
 ```
 
-```sh [bun]
-bun install --dev @stacksjs/rpx
-# bun add --dev @stacksjs/rpx
-# bun i -d @stacksjs/rpx
+```sh [npm]
+# Install as dependency
+npm install pngx
 
-# or, install globally via
-bun add --global @stacksjs/rpx
+# Or as dev dependency
+npm install --save-dev pngx
 ```
 
 ```sh [pnpm]
-pnpm add --save-dev @stacksjs/rpx
-# pnpm i -d @stacksjs/rpx
+# Install as dependency
+pnpm add pngx
 
-# or, install globally via
-pnpm add --global @stacksjs/rpx
+# Or as dev dependency
+pnpm add -D pngx
 ```
 
 ```sh [yarn]
-yarn add --dev @stacksjs/rpx
-# yarn i -d @stacksjs/rpx
+# Install as dependency
+yarn add pngx
 
-# or, install globally via
-yarn global add @stacksjs/rpx
-```
-
-```sh [brew]
-brew install rpx # coming soon
-```
-
-```sh [pkgx]
-pkgx rpx # coming soon
+# Or as dev dependency
+yarn add -D pngx
 ```
 
 :::
 
-Read more about how to use it in the Usage section of the documentation.
+## Quick Start
 
-## Binaries
+After installation, you can immediately start using pngx:
 
-Choose the binary that matches your platform and architecture:
+```typescript
+import { PNG } from 'pngx'
 
-::: code-group
+// Create a simple red 10x10 PNG
+const png = new PNG({ width: 10, height: 10 })
 
-```sh [macOS (arm64)]
-# Download the binary
-curl -L https://github.com/stacksjs/rpx/releases/download/v0.9.1/rpx-darwin-arm64 -o rpx
+for (let i = 0; i < png.data.length; i += 4) {
+  png.data[i] = 255     // Red
+  png.data[i + 1] = 0   // Green
+  png.data[i + 2] = 0   // Blue
+  png.data[i + 3] = 255 // Alpha
+}
 
-# Make it executable
-chmod +x rpx
-
-# Move it to your PATH
-mv rpx /usr/local/bin/rpx
+const buffer = PNG.sync.write(png)
+console.log('PNG created:', buffer.length, 'bytes')
 ```
 
-```sh [macOS (x64)]
-# Download the binary
-curl -L https://github.com/stacksjs/rpx/releases/download/v0.9.1/rpx-darwin-x64 -o rpx
+## Verification
 
-# Make it executable
-chmod +x rpx
+Verify your installation:
 
-# Move it to your PATH
-mv rpx /usr/local/bin/rpx
+```typescript
+import { PNG } from 'pngx'
+
+// Check version and capabilities
+console.log('pngx loaded successfully!')
+
+// Test basic functionality
+const png = new PNG({ width: 1, height: 1 })
+png.data[0] = 255 // R
+png.data[1] = 255 // G
+png.data[2] = 255 // B
+png.data[3] = 255 // A
+
+const buffer = PNG.sync.write(png)
+console.log('Test PNG size:', buffer.length, 'bytes')
+
+// Verify roundtrip
+const decoded = PNG.sync.read(buffer)
+console.log('Decoded dimensions:', decoded.width, 'x', decoded.height)
 ```
 
-```sh [Linux (arm64)]
-# Download the binary
-curl -L https://github.com/stacksjs/rpx/releases/download/v0.9.1/rpx-linux-arm64 -o rpx
+## System Requirements
 
-# Make it executable
-chmod +x rpx
+pngx has minimal requirements:
 
-# Move it to your PATH
-mv rpx /usr/local/bin/rpx
+- **Bun 1.0+** (recommended) or Node.js 18+
+- No native dependencies
+- No build step required
+
+## TypeScript Support
+
+pngx is written in TypeScript and provides full type definitions:
+
+```typescript
+import { PNG } from 'pngx'
+import type { PNGOptions, PNGWithMetadata } from 'pngx'
+
+// Options are fully typed
+const options: PNGOptions = {
+  width: 100,
+  height: 100,
+  colorType: 6,
+  bitDepth: 8,
+  deflateLevel: 9,
+}
+
+const png: PNG = new PNG(options)
 ```
 
-```sh [Linux (x64)]
-# Download the binary
-curl -L https://github.com/stacksjs/rpx/releases/download/v0.9.1/rpx-linux-x64 -o rpx
+## CommonJS Support
 
-# Make it executable
-chmod +x rpx
+pngx supports both ESM and CommonJS:
 
-# Move it to your PATH
-mv rpx /usr/local/bin/rpx
+```javascript
+// ESM
+import { PNG } from 'pngx'
+
+// CommonJS
+const { PNG } = require('pngx')
 ```
 
-```sh [Windows (x64)]
-# Download the binary
-curl -L https://github.com/stacksjs/rpx/releases/download/v0.9.1/rpx-windows-x64.exe -o rpx.exe
+## Browser Usage
 
-# Move it to your PATH (adjust the path as needed)
-move rpx.exe C:\Windows\System32\rpx.exe
+pngx can be used in browsers with a bundler:
+
+```typescript
+import { PNG } from 'pngx'
+
+async function processImage(file: File) {
+  const arrayBuffer = await file.arrayBuffer()
+  const buffer = Buffer.from(arrayBuffer)
+
+  const png = PNG.sync.read(buffer)
+  console.log(`Image: ${png.width}x${png.height}`)
+
+  return png
+}
 ```
 
-::: tip
-You can also find the `rpx` binaries in GitHub [releases](https://github.com/stacksjs/rpx/releases).
-:::
+## Troubleshooting
+
+### Import Errors
+
+If you encounter import errors, ensure your `tsconfig.json` has proper module settings:
+
+```json
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true
+  }
+}
+```
+
+### Buffer Not Defined
+
+In browser environments, you may need to polyfill Buffer:
+
+```typescript
+import { Buffer } from 'buffer'
+globalThis.Buffer = Buffer
+```
+
+### Memory Issues
+
+For large images, consider using the streaming API:
+
+```typescript
+import { PNG } from 'pngx'
+import { createReadStream, createWriteStream } from 'fs'
+
+createReadStream('large-image.png')
+  .pipe(new PNG())
+  .on('parsed', function() {
+    // Process image
+    this.pack().pipe(createWriteStream('output.png'))
+  })
+```
+
+## Next Steps
+
+- [Usage Guide](/usage) - Learn the basic API
+- [Configuration](/config) - Customize encoding options
+- [PNG Encoding](/features/png-encoding) - Create PNG images
+- [PNG Decoding](/features/png-decoding) - Read PNG images
