@@ -1,318 +1,256 @@
 import { Buffer } from 'node:buffer'
+import fs from 'node:fs'
+import path from 'node:path'
+import { describe, expect, it, beforeAll } from 'bun:test'
+import { png } from '../src'
 
-const assert = require('node:assert')
-const fs = require('node:fs')
-const path = require('node:path')
-const jpeg = require('..')
+const FIXTURES_DIR = path.join(import.meta.dir, 'fixtures')
 
-function fixture(name) {
-  return fs.readFileSync(path.join(__dirname, 'fixtures', name))
+// Create a simple test PNG buffer programmatically
+function createTestPNG(width: number, height: number, color: { r: number, g: number, b: number, a: number }): Buffer {
+  // Create RGBA data
+  const data = Buffer.alloc(width * height * 4)
+  for (let i = 0; i < width * height; i++) {
+    data[i * 4] = color.r
+    data[i * 4 + 1] = color.g
+    data[i * 4 + 2] = color.b
+    data[i * 4 + 3] = color.a
+  }
+
+  // Encode to PNG
+  return png.sync.write({ width, height, data })
 }
 
-const SUPER_LARGE_JPEG_BASE64 = '/9j/wfFRBf//BdgC/9p/2P/E4d4='
-
-const SUPER_LARGE_RESOLUTION_JPEG_BASE64 = '/9j/wfFR2PDh3g=='
-
-const SUPER_LARGE_JPEG_BUFFER = Buffer.from(SUPER_LARGE_JPEG_BASE64, 'base64')
-const SUPER_LARGE_RESOLUTION_JPEG_BUFFER = Buffer.from(SUPER_LARGE_RESOLUTION_JPEG_BASE64, 'base64')
-
-it('reads image with a bad e1 marker not preceeded by ff', () => {
-  const jpegData = fixture('table-with-bad-e1.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  const expected = fixture('table-with-good-e1.jpg')
-  const rawExpectedImageData = jpeg.decode(expected)
-  expect(rawImageData.data).toEqual(rawExpectedImageData.data)
-})
-
-it('decodes a JPEG', () => {
-  const jpegData = fixture('grumpycat.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(320)
-  expect(rawImageData.height).toEqual(180)
-  const expected = fixture('grumpycat.rgba')
-  expect(rawImageData.data).toEqual(expected)
-})
-
-it('decodes a JPEG with fill bytes', () => {
-  const jpegData = fixture('fillbytes.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(704)
-  expect(rawImageData.height).toEqual(576)
-})
-
-it('decodes a JPEG with RST intervals', () => {
-  const jpegData = fixture('redbox-with-rst.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  const expected = fixture('redbox.jpg')
-  const rawExpectedImageData = jpeg.decode(expected)
-  expect(rawImageData.data).toEqual(rawExpectedImageData.data)
-})
-
-it('decodes a JPEG with trailing bytes', () => {
-  const jpegData = fixture('redbox-with-trailing-bytes.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  const expected = fixture('redbox.jpg')
-  const rawExpectedImageData = jpeg.decode(expected)
-  expect(rawImageData.data).toEqual(rawExpectedImageData.data)
-})
-
-it('decodes a grayscale JPEG', () => {
-  const jpegData = fixture('apsara.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(580)
-  expect(rawImageData.height).toEqual(599)
-  expect(rawImageData.comments).toEqual(['File source: http://commons.wikimedia.org/wiki/File:Apsara-mit-Sitar.jpg'])
-  const expected = fixture('apsara.rgba')
-  expect(rawImageData.data).toEqual(expected)
-})
-
-it('decodes a 32-bit TrueColor RGB image', () => {
-  const jpegData = fixture('truecolor.jpg')
-  const rawImageData = jpeg.decode(jpegData, { colorTransform: false })
-  expect(rawImageData.width).toEqual(1280)
-  expect(rawImageData.height).toEqual(2000)
-  const expected = fixture('truecolor.rgba')
-  expect(rawImageData.data).toEqual(expected)
-})
-
-it('decodes a CMYK jpeg with correct colors', () => {
-  const jpegData = fixture('tree-cmyk.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(400)
-  expect(rawImageData.height).toEqual(250)
-  const expected = fixture('tree-cmyk.rgba')
-  expect(rawImageData.data).toEqual(expected)
-})
-
-it('decodes a CMYK jpeg with correct colors without transform', () => {
-  const jpegData = fixture('tree-cmyk-notransform.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(400)
-  expect(rawImageData.height).toEqual(250)
-  const expected = fixture('tree-cmyk-notransform.rgba')
-  expect(rawImageData.data).toEqual(expected)
-})
-
-it('decodes an RGB jpeg with correct colors', () => {
-  const jpegData = fixture('tree-rgb.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(400)
-  expect(rawImageData.height).toEqual(250)
-  const expected = fixture('tree-rgb.rgba')
-  expect(rawImageData.data).toEqual(expected)
-})
-
-it('decodes an progressive RGB jpeg with correct colors', () => {
-  const jpegData = fixture('rgb.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(350)
-  expect(rawImageData.height).toEqual(262)
-  const expected = fixture('rgb.rgba')
-  expect(rawImageData.data).toEqual(expected)
-})
-
-it('decodes a greyscale CMYK jpeg with correct colors', () => {
-  const jpegData = fixture('cmyk-grey.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(300)
-  expect(rawImageData.height).toEqual(389)
-  const expected = fixture('cmyk-grey.rgba')
-  expect(rawImageData.data).toEqual(expected)
-})
-
-it('decodes an adobe CMYK jpeg with correct colors', () => {
-  const jpegData = fixture('cmyktest.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(300)
-  expect(rawImageData.height).toEqual(111)
-  const expected = fixture('cmyktest.rgba')
-  expect(rawImageData.data).toEqual(expected)
-
-  const jpegData2 = fixture('plusshelf-drawing.jpg')
-  const rawImageData2 = jpeg.decode(jpegData2)
-  expect(rawImageData2.width).toEqual(350)
-  expect(rawImageData2.height).toEqual(233)
-  const expected2 = fixture('plusshelf-drawing.rgba')
-  expect(rawImageData2.data).toEqual(expected2)
-})
-
-it('decodes a unconventional table JPEG', () => {
-  const jpegData = fixture('unconventional-table.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(1920)
-  expect(rawImageData.height).toEqual(1200)
-})
-
-it('decodes a progressive JPEG', () => {
-  const jpegData = fixture('skater-progressive.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(256)
-  expect(rawImageData.height).toEqual(256)
-  const expected = fixture('skater-progressive.rgba')
-  expect(rawImageData.data).toEqual(expected)
-})
-
-it('decodes a progressive JPEG the same as non-progressive', () => {
-  const jpegData = fixture('skater.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-
-  const otherJpegData = fixture('skater-progressive.jpg')
-  const otherRawImageData = jpeg.decode(otherJpegData)
-
-  expect(rawImageData.width).toEqual(otherRawImageData.width)
-  expect(rawImageData.height).toEqual(otherRawImageData.height)
-  expect(rawImageData.data).toEqual(otherRawImageData.data)
-})
-
-it('encodes a JPEG', () => {
-  const frameData = fixture('grumpycat.rgba')
-  const rawImageData = {
-    data: frameData,
-    width: 320,
-    height: 180,
-  }
-  const jpegImageData = jpeg.encode(rawImageData, 50)
-  expect(jpegImageData.width).toEqual(320)
-  expect(jpegImageData.height).toEqual(180)
-  const expected = fixture('grumpycat-50.jpg')
-  expect(jpegImageData.data).toEqual(expected)
-})
-
-it('creates a JPEG from an array', () => {
-  const width = 320
-  const height = 180
-  const frameData = Buffer.alloc(width * height * 4)
-  let i = 0
-  while (i < frameData.length) {
-    frameData[i++] = 0xFF // red
-    frameData[i++] = 0x00 // green
-    frameData[i++] = 0x00 // blue
-    frameData[i++] = 0xFF // alpha - ignored in JPEGs
-  }
-  const rawImageData = {
-    data: frameData,
-    width,
-    height,
-  }
-  const jpegImageData = jpeg.encode(rawImageData, 50)
-  expect(jpegImageData.width).toEqual(width)
-  expect(jpegImageData.height).toEqual(height)
-  const expected = fixture('redbox.jpg')
-  expect(jpegImageData.data).toEqual(expected)
-})
-
-it('creates a JPEG from an array with comment', () => {
-  const width = 320
-  const height = 180
-  const comments = ['First comment', 'Second comment']
-  const frameData = Buffer.alloc(width * height * 4)
-  let i = 0
-  while (i < frameData.length) {
-    frameData[i++] = 0xFF // red
-    frameData[i++] = 0x00 // green
-    frameData[i++] = 0x00 // blue
-    frameData[i++] = 0xFF // alpha - ignored in JPEGs
-  }
-  const rawImageData = {
-    data: frameData,
-    width,
-    height,
-    comments,
-  }
-  const jpegImageData = jpeg.encode(rawImageData, 50)
-  expect(jpegImageData.width).toEqual(width)
-  expect(jpegImageData.height).toEqual(height)
-  const expected = fixture('redbox_comment.jpg')
-  expect(jpegImageData.data).toEqual(expected)
-  expect(jpeg.decode(jpegImageData.data).comments).toEqual(['First comment', 'Second comment'])
-})
-
-it('decodes a JPEG into a typed array', () => {
-  const jpegData = fixture('grumpycat.jpg')
-  const rawImageData = jpeg.decode(jpegData, { useTArray: true })
-  expect(rawImageData.width).toEqual(320)
-  expect(rawImageData.height).toEqual(180)
-  const expected = fixture('grumpycat.rgba')
-  expect(rawImageData.data).toEqual(new Uint8Array(expected))
-  assert.ok(rawImageData.data instanceof Uint8Array, 'data is a typed array')
-})
-
-it('decodes a JPEG from a typed array into a typed array', () => {
-  const jpegData = fixture('grumpycat.jpg')
-  const rawImageData = jpeg.decode(new Uint8Array(jpegData), { useTArray: true })
-  expect(rawImageData.width).toEqual(320)
-  expect(rawImageData.height).toEqual(180)
-  const expected = fixture('grumpycat.rgba')
-  expect(rawImageData.data).toEqual(new Uint8Array(expected))
-  assert.ok(rawImageData.data instanceof Uint8Array, 'data is a typed array')
-})
-
-it('decodes a JPEG with options', () => {
-  const jpegData = fixture('grumpycat.jpg')
-  const rawImageData = jpeg.decode(new Uint8Array(jpegData), {
-    useTArray: true,
-    colorTransform: false,
+describe('ts-png', () => {
+  beforeAll(() => {
+    // Ensure fixtures directory exists
+    if (!fs.existsSync(FIXTURES_DIR)) {
+      fs.mkdirSync(FIXTURES_DIR, { recursive: true })
+    }
   })
-  expect(rawImageData.width).toEqual(320)
-  expect(rawImageData.height).toEqual(180)
-  const expected = fixture('grumpycat-nocolortrans.rgba')
-  expect(rawImageData.data).toEqual(new Uint8Array(expected))
-  assert.ok(rawImageData.data instanceof Uint8Array, 'data is a typed array')
-})
 
-it('decodes a JPEG into RGB', () => {
-  const jpegData = fixture('grumpycat.jpg')
-  const rawImageData = jpeg.decode(new Uint8Array(jpegData), { useTArray: true, formatAsRGBA: false })
-  expect(rawImageData.width).toEqual(320)
-  expect(rawImageData.height).toEqual(180)
-  const expected = fixture('grumpycat.rgb')
-  expect(rawImageData.data).toEqual(new Uint8Array(expected))
-  assert.ok(rawImageData.data instanceof Uint8Array, 'data is a typed array')
-})
+  describe('png.sync.read', () => {
+    it('should decode a simple PNG', () => {
+      const width = 10
+      const height = 10
+      const color = { r: 255, g: 0, b: 0, a: 255 }
 
-it('encodes/decode image with exif data', () => {
-  const jpegData = fixture('grumpycat.jpg')
-  const imageData = jpeg.decode(new Uint8Array(jpegData))
-  assert.ok(imageData.exifBuffer, 'decodes an exif buffer')
-  const encodedData = jpeg.encode(imageData)
-  const loopImageData = jpeg.decode(new Uint8Array(encodedData.data))
-  expect(loopImageData.exifBuffer).toEqual(imageData.exifBuffer)
-})
+      // Create and then decode a PNG
+      const pngBuffer = createTestPNG(width, height, color)
+      const decoded = png.sync.read(pngBuffer)
 
-it('decodes image with ffdc marker', () => {
-  const jpegData = fixture('marker-ffdc.jpg')
-  const imageData = jpeg.decode(new Uint8Array(jpegData))
-  expect(imageData.height).toEqual(200)
-  expect(imageData.width).toEqual(200)
-})
+      expect(decoded.width).toBe(width)
+      expect(decoded.height).toBe(height)
+      expect(decoded.data.length).toBe(width * height * 4)
 
-it('decodes large images within memory limits', () => {
-  const jpegData = fixture('black-6000x6000.jpg')
-  const rawImageData = jpeg.decode(jpegData)
-  expect(rawImageData.width).toEqual(6000)
-  expect(rawImageData.height).toEqual(6000)
-}, 30000)
+      // Check first pixel color
+      expect(decoded.data[0]).toBe(color.r)
+      expect(decoded.data[1]).toBe(color.g)
+      expect(decoded.data[2]).toBe(color.b)
+      expect(decoded.data[3]).toBe(color.a)
+    })
 
-// See https://github.com/eugeneware/jpeg-js/issues/53
-it('limits resolution exposure', () => {
-  expect(() => jpeg.decode(SUPER_LARGE_RESOLUTION_JPEG_BUFFER)).toThrow(
-    'maxResolutionInMP limit exceeded by 3405MP',
-  )
-})
+    it('should decode a PNG with transparency', () => {
+      const width = 5
+      const height = 5
+      const color = { r: 0, g: 255, b: 0, a: 128 }
 
-it('limits memory exposure', () => {
-  expect(() => jpeg.decode(SUPER_LARGE_JPEG_BUFFER, { maxResolutionInMP: 500 })).toThrow(
-    /maxMemoryUsageInMB limit exceeded by at least \d+MB/,
-  )
+      const pngBuffer = createTestPNG(width, height, color)
+      const decoded = png.sync.read(pngBuffer)
 
-  // Make sure the limit resets each decode.
-  const jpegData = fixture('grumpycat.jpg')
-  expect(() => jpeg.decode(jpegData)).not.toThrow()
-}, 30000)
+      expect(decoded.width).toBe(width)
+      expect(decoded.height).toBe(height)
 
-// See https://github.com/jpeg-js/jpeg-js/issues/105
-it('errors out invalid sampling factors', () => {
-  expect(() => jpeg.decode(Buffer.from('/9j/wfFR2AD/UdgA/9r/3g==', 'base64')).toThrow(
-    'Invalid sampling factor, expected values above 0',
-  ))
+      // Check alpha channel
+      expect(decoded.data[3]).toBe(color.a)
+    })
+
+    it('should decode various PNG sizes', () => {
+      const sizes = [
+        { width: 1, height: 1 },
+        { width: 16, height: 16 },
+        { width: 100, height: 50 },
+        { width: 50, height: 100 },
+        { width: 256, height: 256 },
+      ]
+
+      for (const size of sizes) {
+        const pngBuffer = createTestPNG(size.width, size.height, { r: 128, g: 128, b: 128, a: 255 })
+        const decoded = png.sync.read(pngBuffer)
+
+        expect(decoded.width).toBe(size.width)
+        expect(decoded.height).toBe(size.height)
+        expect(decoded.data.length).toBe(size.width * size.height * 4)
+      }
+    })
+
+    it('should handle fully transparent PNG', () => {
+      const width = 10
+      const height = 10
+      const color = { r: 0, g: 0, b: 0, a: 0 }
+
+      const pngBuffer = createTestPNG(width, height, color)
+      const decoded = png.sync.read(pngBuffer)
+
+      expect(decoded.width).toBe(width)
+      expect(decoded.height).toBe(height)
+
+      // Check all pixels are transparent
+      for (let i = 0; i < width * height; i++) {
+        expect(decoded.data[i * 4 + 3]).toBe(0)
+      }
+    })
+  })
+
+  describe('png.sync.write', () => {
+    it('should encode a simple PNG', () => {
+      const width = 10
+      const height = 10
+      const data = Buffer.alloc(width * height * 4)
+
+      // Fill with blue
+      for (let i = 0; i < width * height; i++) {
+        data[i * 4] = 0
+        data[i * 4 + 1] = 0
+        data[i * 4 + 2] = 255
+        data[i * 4 + 3] = 255
+      }
+
+      const pngBuffer = png.sync.write({ width, height, data })
+
+      // Verify it's a valid PNG (check magic bytes)
+      expect(pngBuffer[0]).toBe(0x89)
+      expect(pngBuffer[1]).toBe(0x50) // P
+      expect(pngBuffer[2]).toBe(0x4E) // N
+      expect(pngBuffer[3]).toBe(0x47) // G
+      expect(pngBuffer[4]).toBe(0x0D)
+      expect(pngBuffer[5]).toBe(0x0A)
+      expect(pngBuffer[6]).toBe(0x1A)
+      expect(pngBuffer[7]).toBe(0x0A)
+    })
+
+    it('should produce a decodable PNG', () => {
+      const width = 20
+      const height = 15
+      const data = Buffer.alloc(width * height * 4)
+
+      // Create gradient
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4
+          data[i] = Math.floor((x / width) * 255)
+          data[i + 1] = Math.floor((y / height) * 255)
+          data[i + 2] = 128
+          data[i + 3] = 255
+        }
+      }
+
+      const pngBuffer = png.sync.write({ width, height, data })
+      const decoded = png.sync.read(pngBuffer)
+
+      expect(decoded.width).toBe(width)
+      expect(decoded.height).toBe(height)
+
+      // Verify pixel data matches (allowing for compression artifacts in lossless format)
+      for (let i = 0; i < width * height * 4; i++) {
+        expect(decoded.data[i]).toBe(data[i])
+      }
+    })
+  })
+
+  describe('round-trip encoding', () => {
+    it('should preserve pixel data through encode/decode cycle', () => {
+      const width = 32
+      const height = 32
+      const originalData = Buffer.alloc(width * height * 4)
+
+      // Create a pattern
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4
+          originalData[i] = (x * 8) % 256
+          originalData[i + 1] = (y * 8) % 256
+          originalData[i + 2] = ((x + y) * 4) % 256
+          originalData[i + 3] = 255
+        }
+      }
+
+      // Encode
+      const encoded = png.sync.write({ width, height, data: originalData })
+
+      // Decode
+      const decoded = png.sync.read(encoded)
+
+      // Verify
+      expect(decoded.width).toBe(width)
+      expect(decoded.height).toBe(height)
+
+      for (let i = 0; i < originalData.length; i++) {
+        expect(decoded.data[i]).toBe(originalData[i])
+      }
+    })
+
+    it('should preserve alpha channel through encode/decode cycle', () => {
+      const width = 16
+      const height = 16
+      const originalData = Buffer.alloc(width * height * 4)
+
+      // Create pattern with varying alpha
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4
+          originalData[i] = 255
+          originalData[i + 1] = 128
+          originalData[i + 2] = 64
+          originalData[i + 3] = Math.floor((x / width) * 255)
+        }
+      }
+
+      const encoded = png.sync.write({ width, height, data: originalData })
+      const decoded = png.sync.read(encoded)
+
+      for (let i = 0; i < originalData.length; i++) {
+        expect(decoded.data[i]).toBe(originalData[i])
+      }
+    })
+  })
+
+  describe('edge cases', () => {
+    it('should handle 1x1 PNG', () => {
+      const data = Buffer.from([255, 0, 0, 255])
+      const encoded = png.sync.write({ width: 1, height: 1, data })
+      const decoded = png.sync.read(encoded)
+
+      expect(decoded.width).toBe(1)
+      expect(decoded.height).toBe(1)
+      expect(decoded.data[0]).toBe(255)
+      expect(decoded.data[1]).toBe(0)
+      expect(decoded.data[2]).toBe(0)
+      expect(decoded.data[3]).toBe(255)
+    })
+
+    it('should handle wide image (1000x1)', () => {
+      const width = 1000
+      const height = 1
+      const data = Buffer.alloc(width * height * 4, 128)
+
+      const encoded = png.sync.write({ width, height, data })
+      const decoded = png.sync.read(encoded)
+
+      expect(decoded.width).toBe(width)
+      expect(decoded.height).toBe(height)
+    })
+
+    it('should handle tall image (1x1000)', () => {
+      const width = 1
+      const height = 1000
+      const data = Buffer.alloc(width * height * 4, 128)
+
+      const encoded = png.sync.write({ width, height, data })
+      const decoded = png.sync.read(encoded)
+
+      expect(decoded.width).toBe(width)
+      expect(decoded.height).toBe(height)
+    })
+  })
 })
