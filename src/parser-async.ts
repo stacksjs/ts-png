@@ -1,6 +1,9 @@
 import type { Buffer } from 'node:buffer'
 import type { Inflate } from 'node:zlib'
-import { createInflate, Z_MIN_CHUNK } from 'node:zlib'
+import { createInflate } from 'node:zlib'
+
+// Z_MIN_CHUNK is 64 in zlib - hardcode for Bun compatibility
+const Z_MIN_CHUNK = 64
 import { dataToBitMap } from './bitmapper'
 import { ChunkStream } from './chunkstream'
 import { FilterAsync } from './filter-parse-async'

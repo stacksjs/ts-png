@@ -4,7 +4,6 @@ import { dataToBitMap } from './bitmapper'
 import FilterSync from './filter-parse-sync'
 import formatNormalizer from './format-normalizer'
 import { Parser } from './parser'
-import { inflateSync } from './sync-inflate'
 import { SyncReader } from './sync-reader'
 
 interface ParserSyncOptions {
@@ -110,18 +109,8 @@ export function parseSync(buffer: Buffer, options: ParserSyncOptions = {}): Meta
   // Add type guard to help TypeScript narrow the type
   const validatedMeta: MetaData = metaData
 
-  let inflatedData: Buffer
-  if (validatedMeta.interlace) {
-    inflatedData = zlibInflateSync(inflateData)
-  }
-  else {
-    const rowSize = ((validatedMeta.width * validatedMeta.bpp * validatedMeta.depth + 7) >> 3) + 1
-    const imageSize = rowSize * validatedMeta.height
-    inflatedData = inflateSync(inflateData, {
-      chunkSize: imageSize,
-      maxLength: imageSize,
-    })
-  }
+  // Use Node.js zlib for decompression (Bun compatible)
+  const inflatedData = zlibInflateSync(inflateData)
 
   if (!inflatedData?.length) {
     throw new Error('Bad PNG - invalid inflate data response')
