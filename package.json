@@ -1,5 +1,5 @@
 {
-  "name": "pngx",
+  "name": "ts-png",
   "type": "module",
   "version": "0.1.1",
   "description": "Performant TypeScript PNG encoder & decoder.",
