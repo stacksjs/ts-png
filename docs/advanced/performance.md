@@ -157,12 +157,12 @@ class ImageCache {
 ## Example: Optimized Image Processing
 
 ```typescript
-import { Worker } from 'node:worker_threads'
+import { Worker } from 'node:worker*threads'
 import { PNG } from 'pngx'
 
 class OptimizedImageProcessor {
-  private static readonly CHUNK_SIZE = 1024 * 1024 // 1MB chunks
-  private static readonly NUM_WORKERS = 4
+  private static readonly CHUNK*SIZE = 1024 * 1024 // 1MB chunks
+  private static readonly NUM*WORKERS = 4
 
   static async processImage(inputPath: string, outputPath: string): Promise<void> {
     const png = new PNG()
@@ -176,9 +176,9 @@ class OptimizedImageProcessor {
     let chunkIndex = 0
 
     png.on('parsed', () => {
-      const totalChunks = Math.ceil(png.width * png.height / this.CHUNK_SIZE)
+      const totalChunks = Math.ceil(png.width * png.height / this.CHUNK*SIZE)
 
-      for (let i = 0; i < this.NUM_WORKERS; i++) {
+      for (let i = 0; i < this.NUM*WORKERS; i++) {
         const worker = new Worker('./image-worker.js')
 
         worker.on('message', (processedChunk) => {
@@ -192,7 +192,7 @@ class OptimizedImageProcessor {
 
         // Assign chunks to worker
         while (chunkIndex < totalChunks) {
-          const start = chunkIndex * this.CHUNK_SIZE
+          const start = chunkIndex * this.CHUNK*SIZE
           const end = Math.min(start + this.CHUNK_SIZE, png.width * png.height)
 
           worker.postMessage({

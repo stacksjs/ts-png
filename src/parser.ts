@@ -48,7 +48,7 @@ interface MetaData {
 }
 
 type Color = [number, number, number, number]
-type ChunkHandler = (length: number) => void
+type ChunkHandler = (_length: number) => void
 
 export class Parser {
   private readonly _options: ParserOptions

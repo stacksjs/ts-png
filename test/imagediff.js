@@ -8,7 +8,7 @@
   const root = this
   if (typeof module !== 'undefined') {
     try {
-      var Canvas = require('canvas')
+      const Canvas = require('canvas')
     }
     catch (e) {
       throw new Error(
@@ -189,7 +189,7 @@
   function diff(a, b, options) {
     return (equalDimensions(a, b) ? diffEqual : diffUnequal)(a, b, options)
   }
-  function diffEqual(a, b, options) {
+  function diffEqual(a, b, _options) {
     const
       height = a.height
     const width = a.width

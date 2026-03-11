@@ -217,7 +217,7 @@ function createPNGWithProfile(
 
 ```typescript
 function getConfig() {
-  const isProd = process.env.NODE_ENV === 'production'
+  const isProd = process.env.NODE*ENV === 'production'
   const isCI = process.env.CI === 'true'
 
   return {
@@ -259,7 +259,7 @@ function readPNG(buffer: Buffer, trusted: boolean) {
 ```typescript
 function getOptimalConfig(width: number, height: number) {
   const pixelCount = width * height
-  const megapixels = pixelCount / 1_000_000
+  const megapixels = pixelCount / 1*000_000
 
   if (megapixels > 10) {
     // Large image: prioritize memory

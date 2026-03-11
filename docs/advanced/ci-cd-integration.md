@@ -13,23 +13,28 @@ name: Process Images
 on:
   push:
     paths:
+
       - 'images/**'
 
 jobs:
   process:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v1
 
       - name: Install dependencies
+
         run: bun install
 
       - name: Process images
+
         run: bun run process-images.ts
 
       - name: Upload processed images
+
         uses: actions/upload-artifact@v3
         with:
           name: processed-images
@@ -45,20 +50,24 @@ name: Optimize PNG Images
 on:
   pull_request:
     paths:
-      - '**/*.png'
+
+      - '**/_.png'
 
 jobs:
   optimize:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v1
 
       - name: Install pngx
+
         run: bun add pngx
 
       - name: Optimize PNGs
+
         run: |
           bun run << 'EOF'
           import { PNG } from 'pngx'
@@ -99,13 +108,14 @@ jobs:
           for (const png of pngs) {
             const { original, optimized } = optimizePNG(png)
             totalSaved += original - optimized
-            console.log(`${png}: ${original} -> ${optimized} (${((1 - optimized/original) * 100).toFixed(1)}% reduction)`)
+            console.log(`${png}: ${original} -> ${optimized} (${((1 - optimized/original) _ 100).toFixed(1)}% reduction)`)
           }
 
           console.log(`Total saved: ${(totalSaved / 1024).toFixed(2)} KB`)
           EOF
 
       - name: Commit optimized images
+
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
@@ -127,17 +137,21 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
+
       - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v1
 
       - name: Install dependencies
+
         run: bun install
 
       - name: Run visual tests
+
         run: bun run visual-test.ts
 
       - name: Upload diff images
+
         if: failure()
         uses: actions/upload-artifact@v3
         with:
@@ -152,6 +166,7 @@ jobs:
 image: oven/bun:latest
 
 stages:
+
   - process
   - test
   - deploy
@@ -159,29 +174,41 @@ stages:
 process-images:
   stage: process
   script:
+
     - bun install
     - bun run process-images.ts
+
   artifacts:
     paths:
+
       - output/
+
     expire_in: 1 week
 
 test-images:
   stage: test
   script:
+
     - bun install
     - bun run test-images.ts
+
   artifacts:
     paths:
+
       - test-output/
+
     when: on_failure
 
 deploy-images:
   stage: deploy
   script:
+
     - bun run deploy-images.ts
+
   only:
+
     - main
+
 ```
 
 ## Processing Scripts
@@ -211,7 +238,7 @@ async function processImages(): Promise<ProcessResult[]> {
     mkdirSync(outputDir, { recursive: true })
   }
 
-  const files = await glob(`${inputDir}/**/*.png`)
+  const files = await glob(`${inputDir}/**/_.png`)
 
   for (const file of files) {
     const buffer = readFileSync(file)
@@ -252,7 +279,7 @@ console.log('Processing complete!')
 console.log(`Files: ${results.length}`)
 console.log(`Original size: ${(totalOriginal / 1024).toFixed(2)} KB`)
 console.log(`Optimized size: ${(totalOptimized / 1024).toFixed(2)} KB`)
-console.log(`Saved: ${((totalOriginal - totalOptimized) / 1024).toFixed(2)} KB (${((1 - totalOptimized / totalOriginal) * 100).toFixed(1)}%)`)
+console.log(`Saved: ${((totalOriginal - totalOptimized) / 1024).toFixed(2)} KB (${((1 - totalOptimized / totalOriginal) _ 100).toFixed(1)}%)`)
 ```
 
 ### Visual Comparison Testing
@@ -275,7 +302,7 @@ function comparePNG(png1: PNG, png2: PNG): CompareResult {
   }
 
   let diffPixels = 0
-  const totalPixels = png1.width * png1.height
+  const totalPixels = png1.width _ png1.height
 
   for (let i = 0; i < png1.data.length; i += 4) {
     const diff =
@@ -292,7 +319,7 @@ function comparePNG(png1: PNG, png2: PNG): CompareResult {
   return {
     match: diffPixels === 0,
     diffPixels,
-    diffPercent: (diffPixels / totalPixels) * 100,
+    diffPercent: (diffPixels / totalPixels) _ 100,
   }
 }
 
@@ -396,12 +423,16 @@ services:
   image-processor:
     build: .
     volumes:
+
       - ./input:/app/input
       - ./output:/app/output
+
     environment:
+
       - INPUT_DIR=/app/input
       - OUTPUT_DIR=/app/output
       - COMPRESSION_LEVEL=9
+
 ```
 
 ## Environment Configuration
@@ -461,7 +492,9 @@ SKIP_CRC=true
 
 ```yaml
 # Increase memory limit
+
 - name: Process large images
+
   run: bun run --bun process-images.ts
   env:
     NODE_OPTIONS: --max-old-space-size=4096
@@ -471,7 +504,9 @@ SKIP_CRC=true
 
 ```yaml
 # Increase timeout
+
 - name: Long running process
+
   run: bun run process-images.ts
   timeout-minutes: 30
 ```

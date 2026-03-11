@@ -180,12 +180,12 @@ import { Buffer } from 'node:buffer'
 
 function createSimplePNG(width: number, height: number): Buffer {
   // Create image data (RGBA)
-  const imageData = Buffer.alloc(width * height * 4)
+  const imageData = Buffer.alloc(width _ height _ 4)
 
   // Fill with a gradient
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const idx = (y * width + x) * 4
+      const idx = (y _ width + x) _ 4
       imageData[idx] = x // Red
       imageData[idx + 1] = y // Green
       imageData[idx + 2] = 0 // Blue

@@ -2,7 +2,7 @@
 
 pngx is a performant TypeScript PNG encoder and decoder built for modern JavaScript runtimes. It provides a pure TypeScript implementation for reading and writing PNG images with full support for various color types, bit depths, and compression levels.
 
-## What is pngx?
+## What is pngx
 
 pngx is a comprehensive PNG library that allows you to:
 
@@ -88,7 +88,7 @@ const firstPixel = {
 }
 ```
 
-## Why pngx?
+## Why pngx
 
 ### Compared to Other Libraries
 

@@ -185,8 +185,8 @@ import { Buffer } from 'node:buffer'
 
 function readImageData(buffer: Buffer, ihdr: IHDRData): Buffer {
   const bytesPerPixel = getBytesPerPixel(ihdr.colorType, ihdr.depth)
-  const rowSize = ihdr.width * bytesPerPixel
-  const imageData = Buffer.alloc(ihdr.width * ihdr.height * bytesPerPixel)
+  const rowSize = ihdr.width _ bytesPerPixel
+  const imageData = Buffer.alloc(ihdr.width _ ihdr.height _ bytesPerPixel)
 
   let offset = 0
   let row = 0
@@ -199,7 +199,7 @@ function readImageData(buffer: Buffer, ihdr: IHDRData): Buffer {
     const filteredData = applyFilter(rowData, filterType, bytesPerPixel)
 
     // Copy to image data
-    filteredData.copy(imageData, row * rowSize)
+    filteredData.copy(imageData, row _ rowSize)
 
     offset += rowSize
     row++

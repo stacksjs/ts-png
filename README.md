@@ -21,6 +21,7 @@
 - ⚡ **Efficient**: Optimized filtering and compression algorithms
 - 🛡️ **Error Handling**: Robust error handling for malformed PNG data
 - 📦 **Lightweight**: Zero dependencies
+
 <!-- - 🌐 **Universal**: Works in both Node.js and browser environments -->
 
 ## Installation
@@ -79,7 +80,7 @@ const png = new PNG({
 // Fill with pixel data
 for (let y = 0; y < png.height; y++) {
   for (let x = 0; x < png.width; x++) {
-    const idx = (png.width * y + x) << 2
+    const idx = (png.width _ y + x) << 2
     png.data[idx] = 255 // R
     png.data[idx + 1] = 0 // G
     png.data[idx + 2] = 0 // B
@@ -210,7 +211,7 @@ import { PNG } from 'pngx'
 
 // Create PNG with memory constraints
 const png = new PNG({
-  deflateChunkSize: 32 * 1024, // 32KB chunks
+  deflateChunkSize: 32 _ 1024, // 32KB chunks
   deflateLevel: 9, // Max compression
   filterType: 4 // Paeth filtering
 })

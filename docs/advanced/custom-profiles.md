@@ -306,16 +306,16 @@ const grayscaleWebProfile = extendProfile(
 ```typescript
 class ProfileBuilder {
   private options: Partial<PNGProfile['options']> = {}
-  private _name: string = 'custom'
-  private _description: string = 'Custom profile'
+  private *name: string = 'custom'
+  private *description: string = 'Custom profile'
 
   name(name: string): this {
-    this._name = name
+    this.*name = name
     return this
   }
 
   description(desc: string): this {
-    this._description = desc
+    this.*description = desc
     return this
   }
 
@@ -349,8 +349,8 @@ class ProfileBuilder {
 
   build(): PNGProfile {
     return {
-      name: this._name,
-      description: this._description,
+      name: this.*name,
+      description: this.*description,
       options: {
         colorType: this.options.colorType ?? 6,
         bitDepth: this.options.bitDepth ?? 8,

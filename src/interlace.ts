@@ -25,7 +25,7 @@ interface PassDimensions {
   index: number
 }
 
-type InterlaceIterator = (x: number, y: number, pass: number) => number
+type InterlaceIterator = (_x: number, _y: number, _pass: number) => number
 
 /**
  * The seven passes of the Adam7 interlacing algorithm.
