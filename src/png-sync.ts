@@ -6,7 +6,14 @@ import parse from './parser-sync'
 interface PNGSyncOptions {
   // Common options that can be passed to both read and write
   skipRescale?: boolean
-  // Add other options as needed
+  checkCRC?: boolean
+  deflateChunkSize?: number
+  deflateLevel?: number
+  deflateStrategy?: number
+  inputHasAlpha?: boolean
+  bitDepth?: 8 | 16
+  colorType?: number
+  inputColorType?: number
 }
 
 interface PNGReadResult {
@@ -36,10 +43,15 @@ export function read(buffer: Buffer, options: PNGSyncOptions = {}): PNGReadResul
  * @returns Encoded PNG data as a buffer
  */
 export function write(png: PNG | PNGReadResult, options: PNGSyncOptions = {}): Buffer {
-  return pack(png, options)
+  if (!png.data) {
+    throw new Error('No data to write')
+  }
+  return pack({ width: png.width, height: png.height, data: png.data, gamma: png.gamma }, options)
 }
 
-export default {
+const PNGSync: { write: typeof write, read: typeof read } = {
   write,
   read,
 }
+
+export default PNGSync

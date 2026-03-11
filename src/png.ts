@@ -9,6 +9,16 @@ interface PNGOptions {
   width?: number
   height?: number
   fill?: boolean
+  skipRescale?: boolean
+  checkCRC?: boolean
+  deflateChunkSize?: number
+  deflateLevel?: number
+  deflateStrategy?: number
+  inputHasAlpha?: boolean
+  bitDepth?: 8 | 16
+  colorType?: number
+  inputColorType?: number
+  filterType?: number
 }
 
 interface PNGMetadata {

@@ -1,5 +1,5 @@
-import type { Buffer } from 'node:buffer'
 import type { Inflate } from 'node:zlib'
+import { Buffer } from 'node:buffer'
 import { createInflate } from 'node:zlib'
 
 // Z_MIN_CHUNK is 64 in zlib - hardcode for Bun compatibility
@@ -10,17 +10,19 @@ import { FilterAsync } from './filter-parse-async'
 import formatNormalizer from './format-normalizer'
 import { Parser } from './parser'
 
-interface ParserOptions {
+interface ParserAsyncOptions {
   skipRescale?: boolean
+  checkCRC?: boolean
 }
 
 interface BitmapInfo {
   width: number
   height: number
   depth: 1 | 2 | 4 | 8 | 16
-  bpp: number
+  bpp: 1 | 2 | 3 | 4
   interlace: boolean
-  palette?: Buffer
+  colorType: number
+  palette?: Color[]
   transColor?: number[]
   alpha?: boolean
 }
@@ -30,17 +32,21 @@ interface ParserMetadata {
   height: number
   depth: number
   interlace: boolean
-  palette?: Buffer
-  color?: boolean
-  alpha?: boolean
+  colorType: number
+  bpp: number
+  palette: boolean
+  color: boolean
+  alpha: boolean
 }
 
+type Color = [number, number, number, number]
+
 interface ParserCallbacks {
-  read: () => void
+  read: (length: number, callback: (data: Buffer) => void) => void
   error: (err: Error) => void
   metadata: (metadata: ParserMetadata) => void
   gamma: (gamma: number) => void
-  palette: (palette: Buffer) => void
+  palette: (palette: Color[]) => void
   transColor: (transColor: number[]) => void
   finished: () => void
   inflateData: (data: Buffer) => void
@@ -50,7 +56,7 @@ interface ParserCallbacks {
 
 export class ParserAsync extends ChunkStream {
   private readonly _parser: Parser
-  private readonly _options: ParserOptions
+  private readonly _options: ParserAsyncOptions
   private _inflate: Inflate | null
   private _filter: FilterAsync | null
   private _metaData!: ParserMetadata
@@ -58,7 +64,7 @@ export class ParserAsync extends ChunkStream {
   private errord: boolean
   public writable: boolean
 
-  constructor(options: ParserOptions = {}) {
+  constructor(options: ParserAsyncOptions = {}) {
     super()
 
     this.writable = true
@@ -69,7 +75,7 @@ export class ParserAsync extends ChunkStream {
     this._options = options
 
     const callbacks: ParserCallbacks = {
-      read: () => this.read.bind(this),
+      read: this.read.bind(this),
       error: this._handleError.bind(this),
       metadata: this._handleMetaData.bind(this),
       gamma: this.emit.bind(this, 'gamma'),
@@ -113,7 +119,7 @@ export class ParserAsync extends ChunkStream {
         this._inflate.on('error', err => this.emit('error', err))
         this._filter!.on('complete', this._complete.bind(this))
 
-        this._inflate.pipe(this._filter!)
+        this._inflate.pipe(this._filter! as unknown as NodeJS.WritableStream)
       }
       else {
         const rowSize = ((this._bitmapInfo.width
@@ -162,7 +168,7 @@ export class ParserAsync extends ChunkStream {
     this._bitmapInfo.transColor = transColor
   }
 
-  private _handlePalette(palette: Buffer): void {
+  private _handlePalette(palette: Color[]): void {
     this._bitmapInfo.palette = palette
   }
 
@@ -195,8 +201,11 @@ export class ParserAsync extends ChunkStream {
 
     try {
       const bitmapData = dataToBitMap(filteredData, this._bitmapInfo)
+      const bitmapBuffer = Buffer.isBuffer(bitmapData)
+        ? bitmapData
+        : Buffer.from(bitmapData.buffer)
       const normalisedBitmapData = formatNormalizer(
-        bitmapData,
+        bitmapBuffer,
         this._bitmapInfo,
         this._options.skipRescale,
       )

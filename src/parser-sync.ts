@@ -6,34 +6,26 @@ import formatNormalizer from './format-normalizer'
 import { Parser } from './parser'
 import { SyncReader } from './sync-reader'
 
+type Color = [number, number, number, number]
+
 interface ParserSyncOptions {
   skipRescale?: boolean
+  checkCRC?: boolean
 }
 
-interface MetaData {
+interface ParseResult {
   width: number
   height: number
-  depth: 1 | 2 | 4 | 8 | 16
-  bpp: 1 | 2 | 4 | 3
+  depth: number
+  bpp: number
   interlace: boolean
   color?: boolean
   colorType: number
   alpha?: boolean
   data?: Buffer
   gamma?: number
-  palette?: Color[] // Change from Buffer to Color array
+  palette?: Color[]
   transColor?: number[]
-}
-
-interface ParserCallbacks {
-  read: () => Buffer
-  error: (err: Error) => void
-  metadata: (metadata: MetaData) => void
-  gamma: (gamma: number) => void
-  palette: (palette: Buffer) => void
-  transColor: (transColor: number[]) => void
-  inflateData: (data: Buffer) => void
-  simpleTransparency: () => void
 }
 
 /**
@@ -42,38 +34,41 @@ interface ParserCallbacks {
  * @param options Parser options
  * @returns Parsed PNG metadata including pixel data
  */
-export function parseSync(buffer: Buffer, options: ParserSyncOptions = {}): MetaData {
+export function parseSync(buffer: Buffer, options: ParserSyncOptions = {}): ParseResult {
   let err: Error | null = null
-  let metaData: MetaData | null = null
+  let result: ParseResult | null = null
   let gamma: number | null = null
   const inflateDataList: Buffer[] = []
 
-  const callbacks: ParserCallbacks = {
-    read(): Buffer {
-      return Buffer.alloc(0) // Will be overridden by reader.read
-    },
+  const reader = new SyncReader(buffer)
+
+  const parser = new Parser(options, {
+    read: reader.read.bind(reader),
 
     error(_err: Error): void {
       err = _err
     },
 
-    metadata(_metaData: MetaData): void {
-      metaData = _metaData
+    metadata(metaData): void {
+      const { palette: _hasPalette, ...rest } = metaData
+      result = {
+        ...rest,
+      }
     },
 
     gamma(_gamma: number): void {
       gamma = _gamma
     },
 
-    palette(palette: Buffer): void {
-      if (metaData) {
-        metaData.palette = palette
+    palette(palette: Color[]): void {
+      if (result) {
+        result.palette = palette
       }
     },
 
     transColor(transColor: number[]): void {
-      if (metaData) {
-        metaData.transColor = transColor
+      if (result) {
+        result.transColor = transColor
       }
     },
 
@@ -81,17 +76,16 @@ export function parseSync(buffer: Buffer, options: ParserSyncOptions = {}): Meta
       inflateDataList.push(inflatedData)
     },
 
+    finished(): void {
+      // No-op for sync parsing
+    },
+
     simpleTransparency(): void {
-      if (metaData) {
-        metaData.alpha = true
+      if (result) {
+        result.alpha = true
       }
     },
-  }
-
-  const reader = new SyncReader(buffer)
-  callbacks.read = reader.read.bind(reader)
-
-  const parser = new Parser(options, callbacks)
+  })
 
   parser.start()
   reader.process()
@@ -99,7 +93,7 @@ export function parseSync(buffer: Buffer, options: ParserSyncOptions = {}): Meta
   if (err)
     throw err
 
-  if (!metaData)
+  if (!result)
     throw new Error('PNG parsing failed - no metadata available')
 
   // Join together the inflate data
@@ -107,7 +101,7 @@ export function parseSync(buffer: Buffer, options: ParserSyncOptions = {}): Meta
   inflateDataList.length = 0
 
   // Add type guard to help TypeScript narrow the type
-  const validatedMeta: MetaData = metaData
+  const validatedMeta: ParseResult = result
 
   // Use Node.js zlib for decompression (Bun compatible)
   const inflatedData = zlibInflateSync(inflateData)
@@ -116,8 +110,8 @@ export function parseSync(buffer: Buffer, options: ParserSyncOptions = {}): Meta
     throw new Error('Bad PNG - invalid inflate data response')
   }
 
-  const unfilteredData = FilterSync(inflatedData, validatedMeta)
-  const bitmapData = dataToBitMap(unfilteredData, validatedMeta)
+  const unfilteredData = FilterSync(inflatedData, validatedMeta as Parameters<typeof FilterSync>[1])
+  const bitmapData = dataToBitMap(unfilteredData, validatedMeta as Parameters<typeof dataToBitMap>[1])
   const normalizedBitmapData = formatNormalizer(
     Buffer.from(bitmapData.buffer),
     validatedMeta,
@@ -127,7 +121,7 @@ export function parseSync(buffer: Buffer, options: ParserSyncOptions = {}): Meta
   validatedMeta.data = normalizedBitmapData
   validatedMeta.gamma = gamma || 0
 
-  return metaData
+  return result
 }
 
 export default parseSync

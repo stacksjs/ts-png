@@ -20,5 +20,6 @@
     "verbatimModuleSyntax": true,
     "skipDefaultLibCheck": true,
     "skipLibCheck": true
-  }
+  },
+  "exclude": ["bunpress.config.ts", "buddy-bot.config.ts", "clarity.config.ts"]
 }
