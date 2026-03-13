@@ -2,7 +2,7 @@
 
 ## About
 
-Performant TypeScript PNG encoder & decoder.
+A TypeScript library (pngx) for encoding and decoding PNG images with comprehensive type safety and built-in memory management. It supports all standard color types (Grayscale, RGB, RGBA, Palette), all PNG filter types (None, Sub, Up, Average, Paeth, Adaptive), proper handling of critical PNG chunks (IHDR, IDAT, PLTE, IEND), and robust error handling for malformed data. The library is zero-dependency and provides a streaming API via `parse()` and `pack()` methods.
 
 ## Linting
 
