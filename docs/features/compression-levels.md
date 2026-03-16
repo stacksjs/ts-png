@@ -6,7 +6,7 @@ pngx provides fine-grained control over PNG compression, allowing you to optimiz
 
 PNG compression uses the DEFLATE algorithm with optional row filtering:
 
-```
+```text
 Raw Pixels → Filter → DEFLATE → PNG File
 ```
 

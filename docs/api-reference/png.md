@@ -43,7 +43,7 @@ interface PNGOptions {
 
 ## Methods
 
-### parse(buffer: Buffer, callback: (err: Error | null, data: Buffer) => void): void
+### parse(buffer: Buffer, callback: (err: Error or null, data: Buffer) => void): void
 
 Parses a PNG buffer and populates the image data.
 
