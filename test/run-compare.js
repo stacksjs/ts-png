@@ -19,11 +19,11 @@ puppeteer
         }
       }
       catch (err) {
-        console.log('Failed', err)
+        process.stderr.write(`Failed ${err}\n`)
       }
     })
-    console.log('Comparing in Chrome')
-    console.log('Comparison Test Results:')
+    process.stdout.write('Comparing in Chrome\n')
+    process.stdout.write('Comparison Test Results:\n')
     await browser.close()
     if (results) {
       let success = true
@@ -39,11 +39,11 @@ puppeteer
         }
         success = success && result.success
       }
-      console.log('Success:', successes.join(', '))
+      process.stdout.write(`Success: ${successes.join(', ')}\n`)
       if (failures.length) {
-        console.log('Failure:', failures.join(', '))
+        process.stdout.write(`Failure: ${failures.join(', ')}\n`)
         if (failures.length > 10) {
-          console.error('failures higher than expected')
+          process.stderr.write('failures higher than expected\n')
           process.exitCode = 1
         }
       }

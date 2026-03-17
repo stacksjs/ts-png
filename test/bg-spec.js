@@ -38,7 +38,7 @@ test('outputs background, created from scratch', (t) => {
       t.ok(isBufferEqual, 'compares with working file ok')
 
       if (!isBufferEqual) {
-        console.log(out.length, ref.length)
+        process.stdout.write(`${out.length} ${ref.length}\n`)
       }
 
       t.end()

@@ -13,4 +13,4 @@ module.exports = () => {
   server.close()
 }
 
-console.log('Tests available at http://localhost:8000/')
+process.stdout.write('Tests available at http://localhost:8000/\n')

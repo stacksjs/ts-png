@@ -8,7 +8,7 @@ function parseFile(filename, cb) {
   fs.createReadStream(path.join(__dirname, 'png-parse-data', filename))
     .pipe(new PNG())
     .on('error', (e) => {
-      console.log('error')
+      process.stderr.write(`error\n`)
       cb(e)
     })
     .on('parsed', function () {

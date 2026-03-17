@@ -10,7 +10,7 @@ fs.readdir(`${__dirname}/in/`, (err, files) => {
     return Boolean(file.match(/\.png$/i))
   })
 
-  console.log('Converting images')
+  process.stdout.write('Converting images\n')
 
   files.forEach((file) => {
     let expectedError = false

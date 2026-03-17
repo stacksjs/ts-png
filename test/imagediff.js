@@ -37,7 +37,8 @@
   const canvas = getCanvas()
   const context = canvas.getContext('2d')
   const previous = root[name]
-  let imagediff; let jasmine
+  let imagediff
+  let jasmine
 
   // Creation
   function getCanvas(width, height) {
@@ -97,7 +98,9 @@
       height = imageData.height
     const width = imageData.width
     const data = imageData.data
-    let newImageData; let newData; let i
+    let newImageData
+    let newData
+    let i
 
     canvas.width = width
     canvas.height = height
@@ -177,7 +180,7 @@
         const y = (i - x) / (a.width * 4)
         const color = x % 4
         x = (x - color) / 4
-        console.log('Difference x', x, 'y', y, ['R', 'G', 'B', 'A'][color], '  -  ', aData[i], ' !== ', bData[i])
+        process.stdout.write(`Difference x ${x} y ${y} ${['R', 'G', 'B', 'A'][color]}   -   ${aData[i]}  !==  ${bData[i]}\n`)
         return false
       }
     }
@@ -198,8 +201,12 @@
     const bData = b.data
     const cData = c.data
     const length = cData.length
-    let row; let column
-    let i; let j; let k; let v
+    let row
+    let column
+    let i
+    let j
+    let k
+    let v
 
     for (i = 0; i < length; i += 4) {
       cData[i] = Math.abs(aData[i] - bData[i])
@@ -221,8 +228,12 @@
     const align = options && options.align
     let rowOffset
     let columnOffset
-    let row; let column
-    let i; let j; let k; let v
+    let row
+    let column
+    let i
+    let j
+    let k
+    let v
 
     for (i = cData.length - 1; i > 0; i = i - 4) {
       cData[i] = 255
@@ -340,15 +351,16 @@
 
   // Image Output
   function imageDataToPNG(imageData, outputFile, callback) {
-    const
-      canvas = toCanvas(imageData)
-    let base64Data
-    let decodedImage
+    const canvas = toCanvas(imageData)
 
     callback = callback || Function
 
-    base64Data = canvas.toDataURL().replace(/^data:image\/\w+;base64,/, '')
-    decodedImage = Buffer.from(base64Data, 'base64')
+    const dataUrl = canvas.toDataURL()
+    const base64Regex = new RegExp('^data:image/\\w+;base64,')
+    const base64Data = dataUrl.replace(base64Regex, '')
+
+    const decodedImage = Buffer.from(base64Data, 'base64')
+
     require('node:fs').writeFile(outputFile, decodedImage, callback)
   }
 
