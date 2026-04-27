@@ -1,7 +1,7 @@
 {
-  "name": "ts-png",
+  "name": "@stacksjs/ts-png",
   "type": "module",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Performant TypeScript PNG encoder & decoder.",
   "author": "Chris Breuer <chris@stacksjs.org>",
   "license": "MIT",
@@ -45,7 +45,7 @@
     "lint:fix": "bunx --bun pickier . --fix",
     "changelog": "bunx logsmith --verbose",
     "changelog:generate": "bunx logsmith --output CHANGELOG.md",
-    "release": "bun run changelog:generate && bunx bumpx prompt --recursive",
+    "release": "bun --bun run changelog:generate && bunx --bun bumpx prompt --recursive",
     "postinstall": "bunx git-hooks",
     "dev:docs": "bun --bun vitepress dev docs",
     "build:docs": "bun --bun vitepress build docs",
