@@ -35,3 +35,4 @@ features:
     icon: "⚡"
     details: "Efficient DCT and color transformation algorithms for fast processing."
 ---
+
