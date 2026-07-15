@@ -2,7 +2,7 @@
   "name": "@stacksjs/ts-png",
   "type": "module",
   "sideEffects": false,
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Performant TypeScript PNG encoder & decoder.",
   "author": "Chris Breuer <chris@stacksjs.org>",
   "license": "MIT",
