@@ -6,13 +6,13 @@
   "description": "Performant TypeScript PNG encoder & decoder.",
   "author": "Chris Breuer <chris@stacksjs.org>",
   "license": "MIT",
-  "homepage": "https://github.com/stacksjs/pngx#readme",
+  "homepage": "https://github.com/stacksjs/ts-png#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stacksjs/pngx.git"
+    "url": "git+https://github.com/stacksjs/ts-png.git"
   },
   "bugs": {
-    "url": "https://github.com/stacksjs/pngx/issues"
+    "url": "https://github.com/stacksjs/ts-png/issues"
   },
   "keywords": [
     "png",
