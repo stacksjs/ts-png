@@ -59,7 +59,7 @@
     "format:fix": "bunx --bun pickier . --format --write"
   },
   "devDependencies": {
-    "typescript": "^5.9.3",
+    "typescript": "^7.0.2",
     "better-dx": "^0.2.15"
   },
   "git-hooks": {
