@@ -50,7 +50,6 @@
     "release:patch": "bunx --bun bumpx patch --yes",
     "release:minor": "bunx --bun bumpx minor --yes",
     "release:major": "bunx --bun bumpx major --yes",
-    "postinstall": "bunx git-hooks",
     "dev:docs": "bun --bun vitepress dev docs",
     "build:docs": "bun --bun vitepress build docs",
     "preview:docs": "bun --bun vitepress preview docs",
