@@ -1,3 +1,18 @@
+[Compare changes](https://github.com/stacksjs/ts-png/compare/v0.1.7...v0.1.8)
+
+## 🐛 Bug Fixes
+
+- remove consumer postinstall hook ([fa6290d](https://github.com/stacksjs/ts-png/commit/fa6290d)) _(by Chris <chrisbreuer93@gmail.com>)_
+
+## 🧹 Chores
+
+- release v0.1.8 ([7a5b514](https://github.com/stacksjs/ts-png/commit/7a5b514)) _(by Chris <chrisbreuer93@gmail.com>)_
+- **deps**: declare bun ^1.3.14 in deps.yaml ([1f5d001](https://github.com/stacksjs/ts-png/commit/1f5d001)) _(by Chris <chrisbreuer93@gmail.com>)_
+
+## Contributors
+
+- _Chris <chrisbreuer93@gmail.com>_
+
 [Compare changes](https://github.com/stacksjs/ts-png/compare/v0.1.1...v0.1.2)
 
 ### 🐛 Bug Fixes
