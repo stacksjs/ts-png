@@ -1,7 +1,7 @@
-import type { BunpressConfig } from 'bunpress'
+import type { BunPressConfig } from '@stacksjs/bunpress'
 
-const config: BunpressConfig = {
-  name: 'pngx',
+const config: BunPressConfig = {
+  title: 'pngx',
   description: 'Performant TypeScript PNG encoder & decoder',
   url: 'https://pngx.sh',
 
