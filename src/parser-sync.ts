@@ -1,6 +1,8 @@
 import { Buffer } from 'node:buffer'
 import { inflateSync as zlibInflateSync } from 'node:zlib'
 import { dataToBitMap } from './bitmapper'
+import type { DecodeOptions } from './decode-budget'
+import { inflatedByteLength } from './decode-budget'
 import FilterSync from './filter-parse-sync'
 import formatNormalizer from './format-normalizer'
 import { Parser } from './parser'
@@ -8,7 +10,7 @@ import { SyncReader } from './sync-reader'
 
 type Color = [number, number, number, number]
 
-interface ParserSyncOptions {
+interface ParserSyncOptions extends DecodeOptions {
   skipRescale?: boolean
   checkCRC?: boolean
 }
@@ -102,13 +104,21 @@ export function parseSync(buffer: Buffer, options: ParserSyncOptions = {}): Pars
 
   // Add type guard to help TypeScript narrow the type
   const validatedMeta: ParseResult = result
+  const expectedBytes = inflatedByteLength(validatedMeta, options)
 
-  // Use Node.js zlib for decompression (Bun compatible)
-  const inflatedData = zlibInflateSync(inflateData)
-
-  if (!inflatedData?.length) {
-    throw new Error('Bad PNG - invalid inflate data response')
+  // Enforce the exact scanline bound during decompression, before allocation grows.
+  let inflatedData: Buffer
+  try {
+    inflatedData = zlibInflateSync(inflateData, { maxOutputLength: expectedBytes })
   }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ERR_BUFFER_TOO_LARGE')
+      throw new Error('PNG inflated data exceeds the declared scanline length', { cause: error })
+    throw error
+  }
+
+  if (inflatedData.length !== expectedBytes)
+    throw new Error('PNG inflated data length does not match the declared scanlines')
 
   const unfilteredData = FilterSync(inflatedData, validatedMeta as Parameters<typeof FilterSync>[1])
   const bitmapData = dataToBitMap(unfilteredData, validatedMeta as Parameters<typeof dataToBitMap>[1])

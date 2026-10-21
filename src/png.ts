@@ -1,11 +1,12 @@
 import { Buffer } from 'node:buffer'
 import { EventEmitter } from 'node:events'
 import process from 'node:process'
+import type { DecodeOptions } from './decode-budget'
 import Packer from './packer-async'
 import Parser from './parser-async'
 import PNGSync from './png-sync'
 
-interface PNGOptions {
+interface PNGOptions extends DecodeOptions {
   width?: number
   height?: number
   fill?: boolean

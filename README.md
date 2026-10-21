@@ -186,6 +186,7 @@ interface PNGOptions {
   inputHasAlpha?: boolean
   deflateLevel?: number
   deflateStrategy?: number
+  maxDecodedBytes?: number
 }
 
 interface BitmapData {
@@ -204,25 +205,28 @@ png.on('parsed', function (this: PNG) {
 
 ## Memory Management
 
-The library includes built-in memory management for handling large images:
+Both synchronous and streaming decoders bound inflated scanlines and the decoded
+RGBA allocation to 256 MiB by default. Set `maxDecodedBytes` to a positive safe
+integer to select a different byte limit. For 16-bit input, the limit includes the
+intermediate four-channel 16-bit bitmap. This is a per-buffer image limit, not a
+limit on the process's total memory or the compressed input size.
 
 ```ts
-import { PNG } from 'pngx'
+import { png } from '@stacksjs/ts-png'
 
-// Create PNG with memory constraints
-const png = new PNG({
-  deflateChunkSize: 32 _ 1024, // 32KB chunks
-  deflateLevel: 9, // Max compression
-  filterType: 4 // Paeth filtering
-})
+const decoded = png.sync.read(inputBuffer, { maxDecodedBytes: 64 * 1024 * 1024 })
 
-// Handle potential memory errors
-png.on('error', (error) => {
-  if (error.message.includes('memory')) {
-    console.error('Memory allocation failed:', error)
-  }
+new png({ maxDecodedBytes: 64 * 1024 * 1024 }).parse(inputBuffer, (error, image) => {
+  if (error) throw error
+  console.log(image.width, image.height)
 })
 ```
+
+Dimensions and allocation arithmetic are checked before inflation and pixel
+allocation. Inflated output must match the exact packed scanline size, including
+Adam7 passes and filter bytes. Streaming decoding reports `parsed` only after
+the complete zlib stream passes validation; excess output, truncated scanlines
+and invalid checksums fail instead of exposing an early successful result.
 
 ## Testing
 

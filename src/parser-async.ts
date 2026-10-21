@@ -2,15 +2,15 @@ import type { Inflate } from 'node:zlib'
 import { Buffer } from 'node:buffer'
 import { createInflate } from 'node:zlib'
 
-// Z_MIN_CHUNK is 64 in zlib - hardcode for Bun compatibility
-const Z_MIN_CHUNK = 64
 import { dataToBitMap } from './bitmapper'
+import type { DecodeOptions } from './decode-budget'
+import { inflatedByteLength } from './decode-budget'
 import { ChunkStream } from './chunkstream'
 import { FilterAsync } from './filter-parse-async'
 import formatNormalizer from './format-normalizer'
 import { Parser } from './parser'
 
-interface ParserAsyncOptions {
+interface ParserAsyncOptions extends DecodeOptions {
   skipRescale?: boolean
   checkCRC?: boolean
 }
@@ -62,6 +62,9 @@ export class ParserAsync extends ChunkStream {
   private _metaData!: ParserMetadata
   private _bitmapInfo!: BitmapInfo
   private errord: boolean
+  private _expectedInflatedBytes: number = 0
+  private _inflatedBytes: number = 0
+  private _filteredData: Buffer | null = null
   public writable: boolean
 
   constructor(options: ParserAsyncOptions = {}) {
@@ -92,7 +95,8 @@ export class ParserAsync extends ChunkStream {
   }
 
   private _handleError(err: Error): void {
-    this.emit('error', err)
+    if (this.errord) return
+    this.errord = true
     this.writable = false
     this.destroy()
 
@@ -108,57 +112,49 @@ export class ParserAsync extends ChunkStream {
       this._filter.on('error', () => { })
     }
 
-    this.errord = true
+    this._filteredData = null
+    this.emit('error', err)
   }
 
   private _inflateData(data: Buffer): void {
+    if (this.errord) return
     if (!this._inflate) {
-      if (this._bitmapInfo.interlace) {
-        this._inflate = createInflate()
-
-        this._inflate.on('error', err => this.emit('error', err))
-        this._filter!.on('complete', this._complete.bind(this))
-
-        this._inflate.pipe(this._filter! as unknown as NodeJS.WritableStream)
-      }
-      else {
-        const rowSize = ((this._bitmapInfo.width
-          * this._bitmapInfo.bpp
-          * this._bitmapInfo.depth + 7) >> 3) + 1
-        const imageSize = rowSize * this._bitmapInfo.height
-        const chunkSize = Math.max(imageSize, Z_MIN_CHUNK)
-
-        this._inflate = createInflate({ chunkSize })
-        let leftToInflate = imageSize
-
-        this._inflate.on('error', (err: Error) => {
-          if (!leftToInflate)
-            return
-          this.emit('error', err)
-        })
-
-        this._filter!.on('complete', this._complete.bind(this))
-
-        const filterWrite = this._filter!.write.bind(this._filter)
-        this._inflate.on('data', (chunk: Buffer) => {
-          if (!leftToInflate)
-            return
-
-          if (chunk.length > leftToInflate) {
-            chunk = chunk.slice(0, leftToInflate)
-          }
-
-          leftToInflate -= chunk.length
-          filterWrite(chunk)
-        })
-
-        this._inflate.on('end', () => this._filter!.end())
-      }
+      // Fixed output chunks bound excess inflation before it reaches the filter.
+      this._inflate = createInflate({ chunkSize: 64 * 1024 })
+      this._inflate.on('error', this._handleError.bind(this))
+      this._filter!.on('complete', (filtered) => { this._filteredData = filtered })
+      this._filter!.on('error', this._handleError.bind(this))
+      this._inflate.on('data', (chunk: Buffer) => {
+        if (this.errord) return
+        this._inflatedBytes += chunk.length
+        if (this._inflatedBytes > this._expectedInflatedBytes) {
+          this._handleError(new Error('PNG inflated data exceeds the declared scanline length'))
+          return
+        }
+        try { this._filter!.write(chunk) }
+        catch (error) { this._handleError(error instanceof Error ? error : new Error(String(error))) }
+      })
+      this._inflate.on('end', () => {
+        if (this.errord) return
+        if (this._inflatedBytes !== this._expectedInflatedBytes || !this._filteredData) {
+          this._handleError(new Error('PNG inflated data length does not match the declared scanlines'))
+          return
+        }
+        this._filter!.end()
+        // Only a complete, validated zlib stream can publish decoded pixels.
+        this._complete(this._filteredData)
+        this._filteredData = null
+      })
     }
     this._inflate.write(data)
   }
 
   private _handleMetaData(metaData: ParserMetadata): void {
+    try { this._expectedInflatedBytes = inflatedByteLength(metaData, this._options) }
+    catch (error) {
+      this._handleError(error instanceof Error ? error : new Error(String(error)))
+      return
+    }
     this._metaData = metaData
     this._bitmapInfo = Object.create(metaData) as BitmapInfo
     this._filter = new FilterAsync(this._bitmapInfo)

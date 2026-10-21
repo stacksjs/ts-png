@@ -1,9 +1,10 @@
 import type { Buffer } from 'node:buffer'
 import type { PNG } from './png' // Importing the main PNG class we created earlier
+import type { DecodeOptions } from './decode-budget'
 import pack from './packer-sync'
 import parse from './parser-sync'
 
-interface PNGSyncOptions {
+interface PNGSyncOptions extends DecodeOptions {
   // Common options that can be passed to both read and write
   skipRescale?: boolean
   checkCRC?: boolean

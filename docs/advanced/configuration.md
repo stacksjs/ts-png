@@ -29,6 +29,7 @@ interface PNGOptions {
 
   // Decoding
   checkCRC?: boolean
+  maxDecodedBytes?: number // Default 256 MiB, bounds inflated scanlines and decoded RGBA
 }
 ```
 
