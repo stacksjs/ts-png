@@ -274,3 +274,12 @@ Made with 💙
 <!-- Badges -->
 
 <!-- [codecov-src]: https://img.shields.io/codecov/c/gh/stacksjs/pngx/main?style=flat-square
+
+### Lossless optimization
+
+`import { optimize } from '@stacksjs/ts-png'` recompresses the original IDAT
+stream with four DEFLATE strategies, keeping only smaller output. It preserves
+bit depth, palettes, transparency, color profiles, EXIF and APNG frame chunks
+without expanding pixels into RGBA. Chunk CRCs and lengths are checked. Set
+`optimize(bytes, { maxInflatedBytes })` to limit decompression (default 256 MiB).
+Malformed or oversized streams throw; already optimal inputs return unchanged.
